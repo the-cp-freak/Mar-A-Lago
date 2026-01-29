@@ -18,6 +18,7 @@
     background: #333;
     padding: 15px;
     border-radius: 10px;
+    min-width: 320px;
   }
 
   .top {
@@ -38,6 +39,16 @@
     padding: 5px;
     font-size: 14px;
   }
+
+  .status {
+    text-align: center;
+    margin: 8px 0;
+    font-weight: bold;
+    height: 20px;
+  }
+
+  .status.win { color: #2ecc71; }
+  .status.lose { color: #e74c3c; }
 
   .board {
     display: grid;
@@ -93,6 +104,8 @@
     <option value="expert">Expert</option>
   </select>
 
+  <div class="status" id="status"></div>
+
   <div class="board" id="board"></div>
 </div>
 
@@ -120,6 +133,8 @@ function restart() {
   clearInterval(timerInterval);
   timer = 0;
   document.getElementById("timer").textContent = "000";
+  document.getElementById("status").textContent = "";
+  document.getElementById("status").className = "status";
   startTimer();
   gameOver = false;
   revealed = 0;
@@ -130,7 +145,8 @@ function restart() {
 function startTimer() {
   timerInterval = setInterval(() => {
     timer++;
-    document.getElementById("timer").textContent = String(timer).padStart(3, "0");
+    document.getElementById("timer").textContent =
+      String(timer).padStart(3, "0");
   }, 1000);
 }
 
@@ -148,7 +164,13 @@ function createBoard() {
       cell.oncontextmenu = e => flag(e, r, c);
       cell.onclick = () => reveal(r, c);
       boardEl.appendChild(cell);
-      board[r][c] = { mine: false, revealed: false, flagged: false, count: 0, el: cell };
+      board[r][c] = {
+        mine: false,
+        revealed: false,
+        flagged: false,
+        count: 0,
+        el: cell
+      };
     }
   }
 
@@ -176,8 +198,7 @@ function countMines() {
       let count = 0;
       for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
-          const nr = r + dr, nc = c + dc;
-          if (board[nr]?.[nc]?.mine) count++;
+          if (board[r + dr]?.[c + dc]?.mine) count++;
         }
       }
       board[r][c].count = count;
@@ -194,8 +215,8 @@ function reveal(r, c) {
   revealed++;
 
   if (cell.mine) {
-    cell.el.classList.add("mine");
     cell.el.textContent = "💣";
+    cell.el.classList.add("mine");
     endGame(false);
     return;
   }
@@ -206,8 +227,7 @@ function reveal(r, c) {
   } else {
     for (let dr = -1; dr <= 1; dr++) {
       for (let dc = -1; dc <= 1; dc++) {
-        const nr = r + dr, nc = c + dc;
-        if (board[nr]?.[nc]) reveal(nr, nc);
+        if (board[r + dr]?.[c + dc]) reveal(r + dr, c + dc);
       }
     }
   }
@@ -234,17 +254,20 @@ function updateMineCounter() {
 function endGame(win) {
   gameOver = true;
   clearInterval(timerInterval);
+
+  const status = document.getElementById("status");
+  status.textContent = win ? "🎉 You win!" : "💥 Game over";
+  status.classList.add(win ? "win" : "lose");
+
   board.flat().forEach(cell => {
     if (cell.mine && !cell.revealed) {
       cell.el.textContent = "💣";
       cell.el.classList.add("mine");
     }
   });
-  alert(win ? "You win! 🎉" : "Game over 💥");
 }
 
 changeDifficulty("beginner");
 </script>
 </body>
 </html>
-
